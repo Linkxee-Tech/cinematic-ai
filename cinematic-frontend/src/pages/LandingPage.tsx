@@ -14,15 +14,16 @@ import CinematicLogo from '@/components/common/CinematicLogo';
 import { toast } from 'sonner';
 
 const GENRES = [
-  { value: 'sci-fi', label: 'Sci-Fi' },
-  { value: 'drama', label: 'Drama' },
-  { value: 'thriller', label: 'Thriller' },
-  { value: 'comedy', label: 'Comedy' },
-  { value: 'horror', label: 'Horror' },
-  { value: 'action', label: 'Action' },
-  { value: 'fantasy', label: 'Fantasy' },
-  { value: 'documentary', label: 'Documentary' },
-  { value: 'romance', label: 'Romance' },
+  { value: 'Sci-Fi', label: 'Sci-Fi' },
+  { value: 'Drama', label: 'Drama' },
+  { value: 'Thriller', label: 'Thriller' },
+  { value: 'Comedy', label: 'Comedy' },
+  { value: 'Horror', label: 'Horror' },
+  { value: 'Action', label: 'Action' },
+  { value: 'Animation', label: 'Animation' },
+  { value: 'Documentary', label: 'Documentary' },
+  { value: 'Fantasy', label: 'Fantasy' },
+  { value: 'Romance', label: 'Romance' },
 ];
 
 const PIPELINE_STEPS = [
@@ -52,7 +53,7 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const { createProject, runPipeline, loading } = useCinematicStore();
   const [prompt, setPrompt] = useState('');
-  const [genre, setGenre] = useState('sci-fi');
+  const [genre, setGenre] = useState('Sci-Fi');
   const MAX = 500;
 
   const handleGenerate = async () => {

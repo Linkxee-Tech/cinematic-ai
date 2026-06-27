@@ -3,7 +3,7 @@ from datetime import datetime
 from enum import Enum as PyEnum
 from sqlalchemy import (
     Column, String, Text, DateTime,
-    Enum, Integer, Float, JSON, func, Index,
+    Enum, Integer, Float, JSON, func, Index, ForeignKey
 )
 from sqlalchemy.orm import relationship
 from app.database import Base
@@ -31,6 +31,8 @@ class Genre(str, PyEnum):
     documentary = "Documentary"
     thriller = "Thriller"
     animation = "Animation"
+    fantasy = "Fantasy"
+    romance = "Romance"
 
 
 class AssetType(str, PyEnum):
@@ -77,7 +79,7 @@ class PipelineRun(Base):
     __tablename__ = "pipeline_runs"
 
     id = Column(String(36), primary_key=True, default=gen_uuid)
-    project_id = Column(String(36), nullable=False, index=True)
+    project_id = Column(String(36), ForeignKey("projects.id"), nullable=False, index=True)
     run_id = Column(String(36), unique=True, nullable=False, default=gen_uuid)
     status = Column(Enum(ProjectStatus), nullable=False, default=ProjectStatus.processing)
     manifest_b2_url = Column(Text, nullable=True)
@@ -95,7 +97,7 @@ class Asset(Base):
     __tablename__ = "assets"
 
     id = Column(String(36), primary_key=True, default=gen_uuid)
-    project_id = Column(String(36), nullable=False, index=True)
+    project_id = Column(String(36), ForeignKey("projects.id"), nullable=False, index=True)
     run_id = Column(String(36), nullable=True)
     asset_type = Column(Enum(AssetType), nullable=False)
     pipeline_step = Column(String(50), nullable=True)

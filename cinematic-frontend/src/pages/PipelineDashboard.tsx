@@ -151,7 +151,7 @@ export default function PipelineDashboard() {
 
   const project = currentProject;
   const steps = project.steps ?? [];
-  const activeStep = steps.find((s) => s.status === 'running');
+  // const activeStep = steps.find((s) => s.status === 'running');
   const completedCount = steps.filter((s) => s.status === 'completed').length;
   const overallProgress = steps.length > 0 ? Math.round((completedCount / steps.length) * 100) : 0;
   const isFailed = project.status === 'failed';

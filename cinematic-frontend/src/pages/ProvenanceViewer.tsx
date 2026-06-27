@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { useCinematicStore } from '@/store/cinematicStore';
 import { api } from '@/lib/api';
 import type { ManifestData } from '@/lib/api';
-import { cn } from '@/lib/utils';
+// import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 // JSON tree node component

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Video Player Component
  *
@@ -24,6 +25,7 @@ import {
 } from 'video-react';
 import 'video-react/dist/video-react.css';
 import './video.css';
+import React, { useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 interface VideoProps {

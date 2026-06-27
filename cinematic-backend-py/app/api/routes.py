@@ -50,7 +50,7 @@ settings = get_settings()
 logger = logging.getLogger("cinematic_ai.routes")
 
 # ── Dependency: mock user (replace with real JWT auth in production) ───────────
-MOCK_USER_ID = "user_00000000-0000-0000-0000-000000000001"
+MOCK_USER_ID = "00000000-0000-0000-0000-000000000001"
 
 
 def get_current_user_id() -> str:
