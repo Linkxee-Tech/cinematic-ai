@@ -68,10 +68,10 @@ PIPELINE_STEPS: list[dict[str, Any]] = [
 FALLBACK_PROVIDERS: dict[str, list[dict[str, str]]] = {
     "script": [
         {"provider": "openai", "model": "gpt-4o"},
-        {"provider": "gemini", "model": "gemini-1.5-pro"}
+        {"provider": "gemini", "model": "gemini-2.5-flash"}
     ],
     "storyboard": [
-        {"provider": "replicate", "model": "sdxl"}
+        {"provider": "replicate", "model": "stability-ai/sdxl:7762fd07cf82c948538e41f63f77d685e02b063e37e496e96eefd46c929f9bdc"}
     ],
     "voiceover": [
         {"provider": "openai", "model": "tts-1"}
@@ -156,7 +156,7 @@ class PipelineOrchestrator:
                             model=step.model, 
                             prompt=step.prompt
                         )
-                        step.metadata = {"text": res.message.content}
+                        step.metadata = {"text": res.text}
                         return step
                 return GeminiChatProvider(api_key=settings.gemini_api_key)
 
