@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     gmi_api_key: str = ""
     replicate_api_token: str = ""
     elevenlabs_api_key: str = ""
+    openai_api_key: str = ""
 
     # Database
     database_url: str = "postgresql+asyncpg://postgres:password@localhost:5432/cinematic_ai"

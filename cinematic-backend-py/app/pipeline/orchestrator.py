@@ -91,32 +91,50 @@ class PipelineOrchestrator:
             model = step["model"]
 
             if provider_name == "gmicloud_chat":
-                from genblaze_gmicloud import GMICloudChatProvider
-                return GMICloudChatProvider(api_key=settings.gmi_api_key, model=model)
+                class GMICloudChatProvider:
+                    def __init__(self, api_key: str):
+                        self.api_key = api_key
+                    async def ainvoke(self, step):
+                        from genblaze_gmicloud import achat
+                        res = await achat(model=step.model, prompt=step.prompt, api_key=self.api_key)
+                        step.metadata = {"text": res.message.content}
+                        return step
+                return GMICloudChatProvider(api_key=settings.gmi_api_key)
 
             if provider_name == "gmicloud_image":
                 from genblaze_gmicloud import GMICloudImageProvider
-                return GMICloudImageProvider(api_key=settings.gmi_api_key, model=model)
+                return GMICloudImageProvider(api_key=settings.gmi_api_key)
 
             if provider_name == "gmicloud_video":
                 from genblaze_gmicloud import GMICloudVideoProvider
-                return GMICloudVideoProvider(api_key=settings.gmi_api_key, model=model)
+                return GMICloudVideoProvider(api_key=settings.gmi_api_key)
 
             if provider_name == "gmicloud_audio":
                 from genblaze_gmicloud import GMICloudAudioProvider
-                return GMICloudAudioProvider(api_key=settings.gmi_api_key, model=model)
+                return GMICloudAudioProvider(api_key=settings.gmi_api_key)
 
             if provider_name == "elevenlabs":
                 from genblaze_elevenlabs import ElevenLabsProvider
-                return ElevenLabsProvider(api_key=settings.elevenlabs_api_key, model=model)
+                return ElevenLabsProvider(api_key=settings.elevenlabs_api_key)
 
             if provider_name == "replicate":
                 from genblaze_replicate import ReplicateProvider
-                return ReplicateProvider(api_key=settings.replicate_api_token, model=model)
+                return ReplicateProvider(api_token=settings.replicate_api_token)
 
             if provider_name == "openai":
-                from genblaze_openai import OpenAIProvider
-                return OpenAIProvider(model=model)
+                class OpenAIChatProvider:
+                    def __init__(self, api_key: str):
+                        self.api_key = api_key
+                    async def ainvoke(self, step):
+                        from genblaze_openai import achat
+                        # genblaze_openai might not have achat, so let's use standard openai or a compatible achat
+                        # Wait, we know genblaze_openai only exports Dalle, Sora, TTS.
+                        # We can just use genblaze_gmicloud.achat with OpenAI's base_url!
+                        from genblaze_gmicloud import achat
+                        res = await achat(model=step.model, prompt=step.prompt, api_key=self.api_key, base_url="https://api.openai.com/v1")
+                        step.metadata = {"text": res.message.content}
+                        return step
+                return OpenAIChatProvider(api_key=settings.openai_api_key)
 
         except ImportError as e:
             logger.warning("Provider import failed for %s: %s", step["name"], e)
@@ -214,13 +232,29 @@ class PipelineOrchestrator:
     ) -> Any:
         """Run a single provider step with timeout."""
         import asyncio
+        from genblaze_core import Step
 
         prompt = _build_step_prompt(step["name"], context)
         timeout = step.get("timeout", 120)
 
-        # Genblaze providers expose an async `generate` or `run` coroutine
-        coro = provider.generate(prompt) if hasattr(provider, "generate") else provider.run(prompt)
-        return await asyncio.wait_for(coro, timeout=timeout)
+        genblaze_step = Step(
+            provider=step["provider"],
+            model=step.get("model", ""),
+            prompt=prompt
+        )
+
+        res_step = await asyncio.wait_for(provider.ainvoke(genblaze_step), timeout=timeout)
+        
+        if hasattr(res_step, "status") and res_step.status.value == "failed":
+            raise RuntimeError(f"Provider failed: {res_step.error}")
+
+        if res_step.assets:
+            return {"url": res_step.assets[0].url}
+            
+        if "text" in res_step.metadata:
+            return res_step.metadata["text"]
+            
+        return res_step.model_dump()
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────

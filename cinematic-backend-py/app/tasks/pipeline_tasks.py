@@ -31,6 +31,7 @@ class PipelineTask(Task):
         if self._db_engine is None:
             from sqlalchemy import create_engine
             sync_url = settings.database_url.replace("+asyncpg", "+psycopg2")
+            sync_url = sync_url.replace("ssl=require", "sslmode=require")
             self._db_engine = create_engine(sync_url, pool_pre_ping=True, pool_size=5)
         return self._db_engine
 
