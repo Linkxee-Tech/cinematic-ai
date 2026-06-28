@@ -230,8 +230,9 @@ class PipelineOrchestrator:
                     fb_name = fallback_cfg["provider"]
                     logger.info("[%s] Retrying '%s' with fallback provider: %s", project_id[:8], name, fb_name)
                     try:
-                        fb_provider = self._build_provider({**step, **fallback_cfg})
-                        output = await self._execute_step(fb_provider, step, context)
+                        merged_step = {**step, **fallback_cfg}
+                        fb_provider = self._build_provider(merged_step)
+                        output = await self._execute_step(fb_provider, merged_step, context)
                         results[name] = {"status": "completed_with_fallback", "output": output}
                         context[name] = output
                         if on_step_update:
