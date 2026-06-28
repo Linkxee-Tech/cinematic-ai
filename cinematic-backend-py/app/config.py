@@ -38,7 +38,11 @@ class Settings(BaseSettings):
     @field_validator("redis_url", mode="after")
     @classmethod
     def fix_redis_url(cls, v: str) -> str:
-        return v.strip().strip('"').strip("'")
+        v = v.strip().strip('"').strip("'")
+        if "upstash.io" in v and "ssl_cert_reqs=" not in v:
+            separator = "&" if "?" in v else "?"
+            v = f"{v}{separator}ssl_cert_reqs=none"
+        return v
 
     # Security
     secret_key: str = "change_me"

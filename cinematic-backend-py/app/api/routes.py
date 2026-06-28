@@ -392,13 +392,15 @@ async def detailed_health(db: AsyncSession = Depends(get_db)):
 
     # Redis
     t0 = time.perf_counter()
+    redis_error = None
     try:
         rc = aioredis.from_url(settings.redis_url)
         await rc.ping()
         await rc.aclose()
         services["redis"] = ServiceHealth(status="up", latency_ms=round((time.perf_counter() - t0) * 1000, 1))
-    except Exception:
-        services["redis"] = ServiceHealth(status="down")
+    except Exception as e:
+        redis_error = str(e)
+        services["redis"] = ServiceHealth(status=f"down ({redis_error})")
 
     # B2
     t0 = time.perf_counter()
