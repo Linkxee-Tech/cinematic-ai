@@ -35,6 +35,11 @@ class Settings(BaseSettings):
     # Redis / Celery
     redis_url: str = "redis://localhost:6379/0"
 
+    @field_validator("redis_url", mode="after")
+    @classmethod
+    def fix_redis_url(cls, v: str) -> str:
+        return v.strip().strip('"').strip("'")
+
     # Security
     secret_key: str = "change_me"
 
