@@ -108,7 +108,7 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="relative overflow-hidden px-6 pt-16 pb-12 md:pt-24 md:pb-16">
         <div className="pointer-events-none absolute inset-0 z-0">
-          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-primary/10 rounded-full blur-[120px]" />
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-primary/10 rounded-full blur-[120px] transform-gpu will-change-transform" />
         </div>
         <div className="relative z-10 max-w-3xl mx-auto text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
