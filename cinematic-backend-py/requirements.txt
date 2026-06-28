@@ -34,6 +34,7 @@ b2sdk==2.5.0
 genblaze-core==0.3.4
 genblaze-gmicloud==0.3.0
 genblaze-openai==0.3.0
+genblaze-google
 genblaze-s3
 genblaze-replicate==0.3.0
 genblaze-elevenlabs==0.3.0

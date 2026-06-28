@@ -144,13 +144,17 @@ class PipelineOrchestrator:
                     def __init__(self, api_key: str):
                         self.api_key = api_key
                     async def ainvoke(self, step):
-                        from genblaze_gmicloud import achat
-                        # Gemini's OpenAI-compatible endpoint
+                        from genblaze_google import achat
+                        import os
+                        
+                        # genblaze_google looks for GEMINI_API_KEY environment variable by default,
+                        # but we can also set it temporarily if it expects it in env or pass it via kwargs.
+                        # It typically passes down **kwargs.
+                        os.environ["GEMINI_API_KEY"] = self.api_key
+                        
                         res = await achat(
                             model=step.model, 
-                            prompt=step.prompt, 
-                            api_key=self.api_key, 
-                            base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+                            prompt=step.prompt
                         )
                         step.metadata = {"text": res.message.content}
                         return step
