@@ -184,6 +184,9 @@ class PipelineOrchestrator:
         genre: str,
         project_id: str,
         user_id: str,
+        target_duration: str = "medium",
+        target_quality: str = "720p",
+        target_style: str = "cinematic",
         on_step_update: Optional[Callable[[str, str, int, Optional[str]], None]] = None,
     ) -> dict[str, Any]:
         """
@@ -198,7 +201,13 @@ class PipelineOrchestrator:
         dict with keys: steps_results, output_paths
         """
         results: dict[str, Any] = {}
-        context: dict[str, Any] = {"prompt": prompt, "genre": genre}
+        context: dict[str, Any] = {
+            "prompt": prompt, 
+            "genre": genre,
+            "target_duration": target_duration,
+            "target_quality": target_quality,
+            "target_style": target_style
+        }
 
         for step in self._steps:
             name = step["name"]
@@ -294,18 +303,30 @@ class PipelineOrchestrator:
 def _build_step_prompt(step_name: str, ctx: dict[str, Any]) -> str:
     base = ctx.get("prompt", "")
     genre = ctx.get("genre", "")
+    duration = ctx.get("target_duration", "medium")
+    quality = ctx.get("target_quality", "720p")
+    style = ctx.get("target_style", "cinematic")
+    
+    dur_guidance = ""
+    if duration == "short":
+        dur_guidance = "It must be very short, roughly 1 paragraph, producing 2-3 scenes."
+    elif duration == "long":
+        dur_guidance = "It must be extensive, roughly 4-5 paragraphs, producing 8-10 scenes."
+    else:
+        dur_guidance = "It should be medium length, roughly 2-3 paragraphs, producing 4-6 scenes."
+
     if step_name == "script":
-        return f"Write a short film script ({genre}): {base}"
+        return f"Write a {style} short film script ({genre}): {base}. {dur_guidance}"
     if step_name == "storyboard":
-        return f"Storyboard for: {ctx.get('script', base)[:500]}"
+        return f"Storyboard for a {style} {genre} film: {ctx.get('script', base)[:500]}"
     if step_name == "video":
-        return f"Cinematic video clip for scene: {ctx.get('storyboard', base)}"
+        return f"{style.capitalize()} video clip, {quality} quality for scene: {ctx.get('storyboard', base)}"
     if step_name == "voiceover":
         return str(ctx.get("script", base))[:2000]
     if step_name == "music":
-        return f"Background score for {genre} short film, emotional, cinematic"
+        return f"Background score for {genre} {style} short film, emotional, cinematic"
     if step_name == "upscale":
-        return "upscale 4x"
+        return f"upscale to {quality}"
     return base
 
 

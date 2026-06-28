@@ -31,7 +31,7 @@ interface CinematicStore {
   _closeWS: (id: string) => void;
 
   fetchProjects: () => Promise<void>;
-  createProject: (prompt: string, genre: string) => Promise<string>;
+  createProject: (prompt: string, genre: string, duration?: string, quality?: string, style?: string) => Promise<string>;
   deleteProject: (id: string) => Promise<void>;
   duplicateProject: (id: string) => Promise<void>;
   renameProject: (id: string, name: string) => Promise<void>;
@@ -68,11 +68,11 @@ export const useCinematicStore = create<CinematicStore>((set, get) => ({
     }
   },
 
-  createProject: async (prompt, genre) => {
+  createProject: async (prompt, genre, duration = 'medium', quality = '720p', style = 'cinematic') => {
     set({ loading: true, error: null });
     try {
       // api.createProject POSTs then GETs the full project
-      const project = await api.createProject(prompt, genre);
+      const project = await api.createProject(prompt, genre, duration, quality, style);
       set((s) => ({
         projects: [{ ...project, step_count: 6 }, ...s.projects],
         currentProject: project,

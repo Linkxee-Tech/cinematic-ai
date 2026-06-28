@@ -49,17 +49,53 @@ const SAMPLE_PROMPTS = [
   'Two rival chefs discover they are cooking the same memory',
 ];
 
+const DURATION_OPTIONS = [
+  { value: 'short', label: 'Short (~60 sec)' },
+  { value: 'medium', label: 'Medium (~2 min)' },
+  { value: 'long', label: 'Long (~5 min)' },
+];
+
+const QUALITY_OPTIONS = [
+  { value: '480p', label: '480p (Fast)' },
+  { value: '720p', label: '720p (Standard)' },
+  { value: '1080p', label: '1080p (HD)' },
+];
+
+const STYLE_OPTIONS = [
+  { value: 'cinematic', label: 'Cinematic' },
+  { value: 'anime', label: 'Anime' },
+  { value: '3d-render', label: '3D Render' },
+  { value: 'watercolor', label: 'Watercolor' },
+];
+
 export default function LandingPage() {
   const navigate = useNavigate();
   const { createProject, runPipeline, loading } = useCinematicStore();
+  
+  // Use localStorage for preferences if available
   const [prompt, setPrompt] = useState('');
   const [genre, setGenre] = useState('Sci-Fi');
+  const [duration, setDuration] = useState(() => localStorage.getItem('pref_duration') || 'medium');
+  const [quality, setQuality] = useState(() => localStorage.getItem('pref_quality') || '720p');
+  const [style, setStyle] = useState(() => localStorage.getItem('pref_style') || 'cinematic');
   const MAX = 500;
+
+  // Compute estimates
+  const baseCost = duration === 'short' ? 10 : duration === 'medium' ? 25 : 60;
+  const qualityMultiplier = quality === '480p' ? 0.8 : quality === '720p' ? 1.0 : 1.5;
+  const estimatedCost = Math.round(baseCost * qualityMultiplier);
+  const estimatedTime = duration === 'short' ? '~1 min' : duration === 'medium' ? '~2-3 mins' : '~5-7 mins';
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
+    
+    // Save preferences
+    localStorage.setItem('pref_duration', duration);
+    localStorage.setItem('pref_quality', quality);
+    localStorage.setItem('pref_style', style);
+    
     try {
-      const id = await createProject(prompt.trim(), genre);
+      const id = await createProject(prompt.trim(), genre, duration, quality, style);
       await runPipeline(id);
       navigate(`/dashboard/${id}`);
     } catch {
@@ -119,21 +155,73 @@ export default function LandingPage() {
                 </button>
               ))}
             </div>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Select value={genre} onValueChange={setGenre}>
-                <SelectTrigger className="sm:w-44 bg-background/50 border-border text-foreground text-sm">
-                  <SelectValue placeholder="Genre" />
-                </SelectTrigger>
-                <SelectContent>
-                  {GENRES.map((g) => (
-                    <SelectItem key={g.value} value={g.value}>{g.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            
+            {/* Generation Settings */}
+            <div className="bg-background/40 rounded-lg p-4 border border-border/40 mb-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="flex flex-col gap-1">
+                <span className="text-[10px] uppercase text-muted-foreground font-semibold">Genre</span>
+                <Select value={genre} onValueChange={setGenre}>
+                  <SelectTrigger className="bg-background/50 border-border text-xs h-8">
+                    <SelectValue placeholder="Genre" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {GENRES.map((g) => (
+                      <SelectItem key={g.value} value={g.value} className="text-xs">{g.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-[10px] uppercase text-muted-foreground font-semibold">Duration</span>
+                <Select value={duration} onValueChange={setDuration}>
+                  <SelectTrigger className="bg-background/50 border-border text-xs h-8">
+                    <SelectValue placeholder="Duration" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DURATION_OPTIONS.map((o) => (
+                      <SelectItem key={o.value} value={o.value} className="text-xs" title="Longer films take more time and credits">{o.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-[10px] uppercase text-muted-foreground font-semibold">Quality</span>
+                <Select value={quality} onValueChange={setQuality}>
+                  <SelectTrigger className="bg-background/50 border-border text-xs h-8">
+                    <SelectValue placeholder="Quality" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {QUALITY_OPTIONS.map((o) => (
+                      <SelectItem key={o.value} value={o.value} className="text-xs" title="Higher quality takes more processing time">{o.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-[10px] uppercase text-muted-foreground font-semibold">Style</span>
+                <Select value={style} onValueChange={setStyle}>
+                  <SelectTrigger className="bg-background/50 border-border text-xs h-8">
+                    <SelectValue placeholder="Style" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STYLE_OPTIONS.map((o) => (
+                      <SelectItem key={o.value} value={o.value} className="text-xs">{o.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+              <div className="text-xs text-muted-foreground flex gap-4">
+                <span>⏱️ Est. Time: <strong className="text-foreground">{estimatedTime}</strong></span>
+                <span>💎 Cost: <strong className="text-foreground">{estimatedCost} Credits</strong></span>
+              </div>
+              
               <Button
                 onClick={handleGenerate}
                 disabled={!prompt.trim() || loading}
-                className="flex-1 sm:flex-none gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-sm h-10"
+                className="w-full sm:w-auto gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-sm h-10 px-6"
               >
                 <Sparkles size={15} />
                 {loading ? 'Creating…' : 'Generate Film'}

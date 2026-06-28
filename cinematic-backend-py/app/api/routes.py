@@ -78,6 +78,9 @@ async def create_project(
         prompt=body.prompt,
         genre=body.genre,
         status=ProjectStatus.processing,
+        target_duration=body.duration,
+        target_quality=body.quality,
+        target_style=body.style,
     )
     db.add(project)
     await db.commit()
@@ -443,6 +446,9 @@ def _project_resp(project: Project, asset_count: int) -> ProjectResp:
         genre=project.genre,
         status=project.status,
         duration=project.duration,
+        target_duration=project.target_duration,
+        target_quality=project.target_quality,
+        target_style=project.target_style,
         thumbnail_url=project.thumbnail_url,
         created_at=project.created_at,
         updated_at=project.updated_at,

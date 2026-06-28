@@ -11,6 +11,9 @@ class ProjectCreate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     prompt: str = Field(..., min_length=1, max_length=10000)
     genre: Genre = Genre.sci_fi
+    duration: str = Field("medium")
+    quality: str = Field("720p")
+    style: str = Field("cinematic")
 
     @field_validator("prompt")
     @classmethod
@@ -33,6 +36,9 @@ class ProjectResp(BaseModel):
     genre: Genre
     status: ProjectStatus
     duration: Optional[str] = None
+    target_duration: str = "medium"
+    target_quality: str = "720p"
+    target_style: str = "cinematic"
     thumbnail_url: Optional[str] = None
     created_at: datetime
     updated_at: datetime

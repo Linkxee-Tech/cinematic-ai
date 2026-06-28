@@ -183,7 +183,14 @@ export default function PipelineDashboard() {
             <BarChart2 size={14} className="text-primary" />
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Overall Progress</span>
           </div>
-          <span className="text-xs font-mono text-primary">{overallProgress}%</span>
+          <div className="flex items-center gap-3">
+            {project.status === 'processing' && (
+              <span className="text-[10px] text-muted-foreground">
+                Est. {project.target_duration === 'short' ? '1m' : project.target_duration === 'medium' ? '2-3m' : '5-7m'} left
+              </span>
+            )}
+            <span className="text-xs font-mono text-primary">{overallProgress}%</span>
+          </div>
         </div>
         <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
           <motion.div

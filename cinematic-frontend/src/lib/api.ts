@@ -55,6 +55,9 @@ export interface Project {
   status: ProjectStatus;
   thumbnail_url?: string;
   duration?: string;
+  target_duration: string;
+  target_quality: string;
+  target_style: string;
   created_at: string;
   updated_at: string;
   asset_count: number;
@@ -165,13 +168,13 @@ export const api = {
   },
 
   // Create project — backend returns {project_id, status}; we then fetch full
-  async createProject(prompt: string, genre: string): Promise<ProjectFull> {
+  async createProject(prompt: string, genre: string, duration: string = 'medium', quality: string = '720p', style: string = 'cinematic'): Promise<ProjectFull> {
     // Auto-generate a name from the first words of the prompt
     const words = prompt.trim().split(/\s+/).slice(0, 7).join(' ');
     const name = words.length > 45 ? words.slice(0, 45) : words;
     const resp = await request<{ project_id: string; status: string }>('/api/projects', {
       method: 'POST',
-      body: JSON.stringify({ prompt, genre, name }),
+      body: JSON.stringify({ prompt, genre, name, duration, quality, style }),
     });
     // Fetch full project detail
     return request<ProjectFull>(`/api/projects/${resp.project_id}`);

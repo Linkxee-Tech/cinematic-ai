@@ -36,7 +36,15 @@ export default function ExportShare() {
 
   useEffect(() => {
     if (!projectId) return;
-    if (!currentProject || currentProject.id !== projectId) loadProject(projectId);
+    if (!currentProject || currentProject.id !== projectId) {
+      loadProject(projectId);
+    } else {
+      // Set export quality default to what was generated
+      if (currentProject.target_quality) {
+        const matchingQuality = QUALITY_OPTIONS.find(q => q.includes(currentProject.target_quality));
+        if (matchingQuality) setQuality(matchingQuality);
+      }
+    }
   }, [projectId, loadProject, currentProject]);
 
   const handleExport = async () => {
@@ -199,6 +207,16 @@ export default function ExportShare() {
                   <Switch checked={includeMetadata} onCheckedChange={setIncludeMetadata} />
                 </div>
               </div>
+              
+              {/* Upscaling Warning */}
+              {project.target_quality && !quality.includes(project.target_quality) && (
+                <div className="mt-4 p-2 bg-amber-500/10 border border-amber-500/30 rounded flex items-start gap-2">
+                  <AlertCircle size={14} className="text-amber-400 shrink-0 mt-0.5" />
+                  <p className="text-[10px] text-amber-300">
+                    You are exporting at <strong>{quality}</strong> but the film was generated at <strong>{project.target_quality}</strong>. Upscaling may increase file size without significantly improving details.
+                  </p>
+                </div>
+              )}
             </div>
           </motion.div>
         )}

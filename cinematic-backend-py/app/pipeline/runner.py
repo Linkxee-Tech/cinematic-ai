@@ -56,12 +56,23 @@ async def run_pipeline(
         if on_step_update:
             on_step_update(step_name, status, progress, preview)
 
+    # Fetch project to get target settings
+    project = await db.execute(select(Project).where(Project.id == project_id))
+    project = project.scalar_one_or_none()
+    
+    target_duration = project.target_duration if project else "medium"
+    target_quality = project.target_quality if project else "720p"
+    target_style = project.target_style if project else "cinematic"
+
     try:
         pipeline_result = await orchestrator.run(
             prompt=prompt,
             genre=genre,
             project_id=project_id,
             user_id=user_id,
+            target_duration=target_duration,
+            target_quality=target_quality,
+            target_style=target_style,
             on_step_update=_on_update,
         )
     except RuntimeError as exc:

@@ -68,6 +68,9 @@ class Project(Base):
     status = Column(Enum(ProjectStatus), nullable=False, default=ProjectStatus.draft)
     duration = Column(String(20), nullable=True)         # e.g. "2:34"
     thumbnail_url = Column(Text, nullable=True)
+    target_duration = Column(String(20), nullable=False, default="medium")
+    target_quality = Column(String(20), nullable=False, default="720p")
+    target_style = Column(String(50), nullable=False, default="cinematic")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
