@@ -160,18 +160,30 @@ async def _run_async_pipeline(
     on_step_update,
 ) -> dict[str, Any]:
     """Thin async wrapper around the DB-session-aware runner."""
-    from app.database import AsyncSessionLocal
+    from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
     from app.pipeline.runner import run_pipeline
 
-    async with AsyncSessionLocal() as db:
-        return await run_pipeline(
-            project_id=project_id,
-            user_id=user_id,
-            prompt=prompt,
-            genre=genre,
-            db=db,
-            on_step_update=on_step_update,
-        )
+    # Create a fresh engine bound to this specific asyncio.run() event loop
+    # This prevents 'RuntimeError: Event loop is closed' on subsequent Celery runs
+    engine = create_async_engine(
+        settings.database_url,
+        echo=False,
+        pool_pre_ping=True,
+    )
+    LocalSession = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
+
+    try:
+        async with LocalSession() as db:
+            return await run_pipeline(
+                project_id=project_id,
+                user_id=user_id,
+                prompt=prompt,
+                genre=genre,
+                db=db,
+                on_step_update=on_step_update,
+            )
+    finally:
+        await engine.dispose()
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
