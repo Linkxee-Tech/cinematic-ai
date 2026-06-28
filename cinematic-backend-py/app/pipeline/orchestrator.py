@@ -64,11 +64,18 @@ PIPELINE_STEPS: list[dict[str, Any]] = [
     },
 ]
 
-# Fallback providers per step name
-FALLBACK_PROVIDERS: dict[str, dict[str, str]] = {
-    "script":     {"provider": "openai",    "model": "gpt-4o"},
-    "storyboard": {"provider": "replicate", "model": "sdxl"},
-    "voiceover":  {"provider": "openai",    "model": "tts-1"},
+# Fallback providers per step name (rotation)
+FALLBACK_PROVIDERS: dict[str, list[dict[str, str]]] = {
+    "script": [
+        {"provider": "openai", "model": "gpt-4o"},
+        {"provider": "gemini", "model": "gemini-1.5-pro"}
+    ],
+    "storyboard": [
+        {"provider": "replicate", "model": "sdxl"}
+    ],
+    "voiceover": [
+        {"provider": "openai", "model": "tts-1"}
+    ],
 }
 
 
@@ -126,15 +133,28 @@ class PipelineOrchestrator:
                     def __init__(self, api_key: str):
                         self.api_key = api_key
                     async def ainvoke(self, step):
-                        from genblaze_openai import achat
-                        # genblaze_openai might not have achat, so let's use standard openai or a compatible achat
-                        # Wait, we know genblaze_openai only exports Dalle, Sora, TTS.
-                        # We can just use genblaze_gmicloud.achat with OpenAI's base_url!
                         from genblaze_gmicloud import achat
                         res = await achat(model=step.model, prompt=step.prompt, api_key=self.api_key, base_url="https://api.openai.com/v1")
                         step.metadata = {"text": res.message.content}
                         return step
                 return OpenAIChatProvider(api_key=settings.openai_api_key)
+
+            if provider_name == "gemini":
+                class GeminiChatProvider:
+                    def __init__(self, api_key: str):
+                        self.api_key = api_key
+                    async def ainvoke(self, step):
+                        from genblaze_gmicloud import achat
+                        # Gemini's OpenAI-compatible endpoint
+                        res = await achat(
+                            model=step.model, 
+                            prompt=step.prompt, 
+                            api_key=self.api_key, 
+                            base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+                        )
+                        step.metadata = {"text": res.message.content}
+                        return step
+                return GeminiChatProvider(api_key=settings.gemini_api_key)
 
         except ImportError as e:
             logger.warning("Provider import failed for %s: %s", step["name"], e)
@@ -202,10 +222,13 @@ class PipelineOrchestrator:
             except Exception as exc:
                 logger.error("[%s] Step '%s' failed: %s", project_id[:8], name, exc, exc_info=True)
 
-                # Attempt fallback
-                fallback_cfg = FALLBACK_PROVIDERS.get(name)
-                if fallback_cfg:
-                    logger.info("[%s] Retrying '%s' with fallback provider", project_id[:8], name)
+                # Attempt fallbacks in order
+                fallbacks = FALLBACK_PROVIDERS.get(name, [])
+                fallback_success = False
+                
+                for fallback_cfg in fallbacks:
+                    fb_name = fallback_cfg["provider"]
+                    logger.info("[%s] Retrying '%s' with fallback provider: %s", project_id[:8], name, fb_name)
                     try:
                         fb_provider = self._build_provider({**step, **fallback_cfg})
                         output = await self._execute_step(fb_provider, step, context)
@@ -213,9 +236,13 @@ class PipelineOrchestrator:
                         context[name] = output
                         if on_step_update:
                             on_step_update(name, "completed", 100, _extract_preview(name, output))
-                        continue
+                        fallback_success = True
+                        break # Stop trying fallbacks once one succeeds
                     except Exception as fb_exc:
-                        logger.error("[%s] Fallback also failed: %s", project_id[:8], fb_exc)
+                        logger.error("[%s] Fallback %s failed: %s", project_id[:8], fb_name, fb_exc)
+                
+                if fallback_success:
+                    continue
 
                 results[name] = {"status": "failed", "error": str(exc)}
                 if on_step_update:
