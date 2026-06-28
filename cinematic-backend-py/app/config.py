@@ -22,9 +22,12 @@ class Settings(BaseSettings):
     @classmethod
     def fix_database_url(cls, v: str) -> str:
         if v.startswith("postgres://"):
-            return v.replace("postgres://", "postgresql+asyncpg://", 1)
-        if v.startswith("postgresql://"):
-            return v.replace("postgresql://", "postgresql+asyncpg://", 1)
+            v = v.replace("postgres://", "postgresql+asyncpg://", 1)
+        elif v.startswith("postgresql://"):
+            v = v.replace("postgresql://", "postgresql+asyncpg://", 1)
+        
+        # asyncpg requires ssl=require, not sslmode=require
+        v = v.replace("sslmode=require", "ssl=require")
         return v
 
     # Redis / Celery
