@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     @field_validator("database_url", mode="after")
     @classmethod
     def fix_database_url(cls, v: str) -> str:
+        v = v.strip().strip('"').strip("'")
+        
         if v.startswith("postgres://"):
             v = v.replace("postgres://", "postgresql+asyncpg://", 1)
         elif v.startswith("postgresql://"):
