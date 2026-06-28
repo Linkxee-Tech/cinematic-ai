@@ -44,7 +44,13 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins_list(self) -> list[str]:
-        return [o.strip() for o in self.cors_origins.split(",")]
+        origins = [o.strip() for o in self.cors_origins.split(",")]
+        # Always allow the Vercel production frontend even if overriden in ENV
+        vercel_url = "https://cinematic-ai-delta.vercel.app"
+        if vercel_url not in origins:
+            origins.append(vercel_url)
+        # Also allow wildcard vercel subdomains if needed, but strict is safer
+        return origins
 
     @property
     def is_production(self) -> bool:
